@@ -1,5 +1,5 @@
-import math
 from node import Node, dist, rel, par, ch, nearest
+from config import config
 
 class SNT:
     """
@@ -17,10 +17,10 @@ class SNT:
         The relative constant.
     """
     def __init__(self, tau, cp, cc, cr=None):
-        self.tau = tau
-        self.cp = cp
-        self.cc = cc
-        self.cr = cr or (2 * cc * tau) / (tau - 4)
+        self.tau = config.arithmatic.cast(tau)
+        self.cp = config.arithmatic.cast(cp)
+        self.cc = config.arithmatic.cast(cc)
+        self.cr = config.arithmatic.cast(cr or (2 * cc * tau) / (tau - 4))
         self.root = None
 
     def setroot(self, point):
@@ -32,8 +32,8 @@ class SNT:
         point : Point
             The first point to be inserted in the net-tree.
         """
-        self.root = Node(point, float('inf'))
-        self.splitbelow(self.root, float('-inf'))
+        self.root = Node(point, config.arithmatic.pinfty)
+        self.splitbelow(self.root, config.arithmatic.ninfty)
 
     def construct(self, points, pointlocation):
         """
@@ -97,7 +97,7 @@ class SNT:
             if lowest not in node.ch:
                 lowest.setpar(node)
                 if hasattr(self, 'ploc'): self.ploc.updateonsplit(lowest)
-        self.splitbelow(lowest, float('-inf'))
+        self.splitbelow(lowest, config.arithmatic.ninfty)
         while not self.iscovered(node):
             node = self.promote(node)
 
@@ -284,7 +284,8 @@ class SNT:
         -------
         float
         """
-        return math.ceil(math.log((computeddist or dist(first, second)) / self.cr, self.tau))
+        return config.arithmatic.ceil(config.arithmatic.log(
+                    (computeddist or dist(first, second)) / self.cr, self.tau))
 
     def __str__(self):
         return str(self.root)

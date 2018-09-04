@@ -7,6 +7,7 @@ to the node relative to the level of the node.
 
 from node import Node, ch, rel, par, dist
 from pointlocation import PointLocation
+from config import config
 
 class SNTPointLocation(PointLocation):
     """
@@ -32,6 +33,9 @@ class SNTPointLocation(PointLocation):
         # A dictionary from nodes to uninserted points. 
         # For each node, it provides the set of all uninserted points in its outer cell
         self._rnn_out = {tree.root : set()}
+        self.basictouchno = 0
+        self.splittouchno = 0
+        self.mergetouchno = 0
 
     def rnn_in(self, nodes):
         """
@@ -161,6 +165,7 @@ class SNTPointLocation(PointLocation):
             A removing node.
         """
         for point in self.rnn_out(node).copy():
+            self.mergetouchno += 1
             self.changernn(point, node, node.par, self.nndist(point))
             self._nn[point] = node.par
         self._rnn_out.pop(node)
@@ -182,6 +187,7 @@ class SNTPointLocation(PointLocation):
         """
         self.addnode(node)
         for point in self.rnn_out(rel(par(node)) | ch(rel(par(node))) | ch(rel(node))):
+            self.basictouchno += 1
             self.trytochangernn(point, node)
 
     def updateonsplit(self, node):
@@ -195,8 +201,9 @@ class SNTPointLocation(PointLocation):
         """
         self.addnode(node)
         # The cells of the leaves or the nodes in level -\infty are always empty
-        if node.level != float('-inf'):
+        if node.level != config.arithmatic.ninfty:
             for point in self.rnn(par(node)):
+                self.splittouchno += 1
                 self.trytochangernn(point, node)
 
     def changernn(self, point, fromnode, tonode, todist=None):

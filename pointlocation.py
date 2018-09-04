@@ -8,6 +8,9 @@ import functools
 class PointLocation(ABC):
     def __init__(self, tree):
         self.tree = tree
+        self.basictouchno=0
+        self.splittouchno=0
+        self.mergetouchno=0
         
     @abstractmethod
     def nn(self, point): 
@@ -43,17 +46,28 @@ class ParallelPointLocation(PointLocation):
         
     def nn(self, point):
         child = self.tree.root.getchild()
-        if child.level == float('-inf'):
+        if dist(child,point) > self.tree.cr * self.tree.tau ** child.level:
             return self.tree.root
         return self.nnhelper(point, {child}, child.level) or self.tree.root
     
     def nnhelper(self, point, currentnodes, level):
-        if point.distto(*[n.point for n in currentnodes]) > self.tree.cr * self.tree.tau ** level:    
+        if len(currentnodes) != 0:
+            self.basictouchno += len(currentnodes)
+        if len(currentnodes) == 0 or \
+            point.distto(*[n.point for n in currentnodes]) > self.tree.cr * self.tree.tau ** level:     
             return None
-        nextnodes = {n if n.level == level - 1 else n.par 
-                     for n in ch(currentnodes) if dist(n, point) <= self.tree.cr * self.tree.tau ** level}
-        nn = self.nnhelper(point, nextnodes, level - 1)
-        return nn if nn else min(currentnodes, key = lambda n : point.distto(n.point))
+        children = ch(currentnodes)
+        nextlevel = max(n.level for n in children)
+        nextnodes = {n if n.level == nextlevel else n.par 
+                     for n in children if dist(n, point) <= self.tree.cr * self.tree.tau ** nextlevel}
+        self.basictouchno += len(children)
+        nn = self.nnhelper(point, nextnodes, nextlevel)
+        if nn:
+            return nn
+        self.basictouchno += len(currentnodes)
+        return min(currentnodes, key = lambda n : point.distto(n.point))
+    
+#         return nn if nn else min(currentnodes, key = lambda n : point.distto(n.point))
     
     def nndist(self, point, nn = None):
         return dist(nn or self.nn(point), point)
@@ -75,16 +89,7 @@ class SinglePathPointLocation(PointLocation):
     def nn(self, point):
         currentnode = self.tree.root
         nextnode = self.tree.root.getchild()
-#         closestdist = dist(nextnode, point)
-#         while closestdist <= self.tree.cr * self.tree.tau ** nextnode.level:
-#             currentnode = nextnode
-#             allnodes = ch(rel(currentnode))
-#             nextnode = allnodes.pop()
-#             closestdist = dist(nextnode, point)
-#             for n in allnodes:
-#                 newdist = dist(n,point)
-#                 if newdist < closestdist and newdist <= self.tree.cr * self.tree.tau ** n.level:
-#                     nextnode, closestdist = n, newdist
+        self.basictouchno += 1
         while dist(nextnode, point) <= self.tree.cr * self.tree.tau ** nextnode.level:
             currentnode = nextnode
             allnodes = ch(rel(currentnode))
@@ -95,6 +100,7 @@ class SinglePathPointLocation(PointLocation):
     
     def mincoveringdist(self, node, point, level):
         dst = dist(node, point)
+        self.basictouchno += 1
         return dst if dst <= self.tree.cr * self.tree.tau ** level else float('inf')
     
     def nndist(self, point, nn = None):

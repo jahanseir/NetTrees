@@ -1,3 +1,8 @@
+"""
+Provides verification methods to ensure if the generated tree is 
+a true semi-compressed net-tree.
+"""
+
 from node import Node, dist, rel
 
 class SNTVerify:

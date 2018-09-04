@@ -1,10 +1,21 @@
 """
-Defines nodes that are the building blocks of net-trees
+Defines nodes that are the building blocks of net-trees.
 """
 
 from point import Point
 
 class Node:
+    """
+    Defines a Node associated to a point and a level which also maintains 
+    its parent, children, and relatives.
+        
+    Parameters
+    ----------
+    point : Point
+        Associated point.
+    level : int
+        Associated level.
+    """
     def __init__(self, point, level):
         self.point = point
         self.level = level
@@ -13,19 +24,66 @@ class Node:
         self.ch = set()
 
     def addrel(self, other):
+        """
+        Makes `self` and `other` relatives.
+        
+        Parameters
+        ----------
+        other: Node
+            The relative node.
+        
+        Returns:
+        -------
+        None
+        """
         self.rel.add(other)
         other.rel.add(self)
 
     def addch(self, other):
+        """
+        Adds `other` as a child of `self`, also sets `self` as the parent of `other`. 
+               
+        Parameters
+        ----------
+        other: Node
+            The child node.
+        
+        Returns:
+        -------
+        None
+        """
         if other.par: other.par.ch.discard(other)
         self.ch.add(other)
         other.par = self
 
     def setpar(self, other):
+        """
+        Makes `other` as the parent of `self`, also sets `self` as a child of `other`.  
+              
+        Parameters
+        ----------
+        other: Node
+            The parent node.
+        
+        Returns:
+        -------
+        None
+        """
         other.addch(self)
 
     def getchild(self):
-        # Return an arbitrary child
+        """
+        Returns an arbitrary child.
+                
+        Parameters
+        ----------
+        None
+        
+        Returns:
+        -------
+        Node
+            An arbitrary child of the current node.
+        """
         return next(iter(self.ch))
 
     def __str__(self):
